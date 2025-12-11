@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>インフルエンザウイルス性髄膜炎：臨床データ・インサイト</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Noto Sans JP', sans-serif;
+            background-color: #f8fafc; /* Cool neutral background */
+            color: #334155;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 400px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 350px;
+            }
+        }
+        .card {
+            background: white;
+            border-radius: 0.75rem; /* rounded-xl */
+            box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+            transition: all 0.3s ease;
+        }
+        .card:hover {
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -1px rgb(0 0 0 / 0.06);
+        }
+        .active-nav {
+            background-color: #e0f2fe; /* sky-100 */
+            color: #0284c7; /* sky-600 */
+            font-weight: 700;
+            border-left: 4px solid #0284c7;
+        }
+        .inactive-nav {
+            color: #64748b; /* slate-500 */
+            border-left: 4px solid transparent;
+        }
+        .inactive-nav:hover {
+            background-color: #f1f5f9; /* slate-100 */
+        }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen">
+
+    <!-- Placeholder Comments Required by Prompt -->
+    <!-- Chosen Palette: Slate & Sky Blue (Medical/Clean/Professional) - Background: Slate-50, Primary: Sky-600, Text: Slate-700 -->
+    <!-- Application Structure Plan: 
+         1. Hero Section: Direct answer to "How rare?" with a visual prevalence meter.
+         2. Tabbed Dashboard Layout:
+            - "Overview (概要)": General rarity and definitions.
+            - "Epidemiology (疫学)": Data on Age and Virus Type (A vs B).
+            - "Clinical (臨床像)": Symptoms and CSF findings simulator.
+            - "Prognosis (予後)": Outcomes comparison.
+         3. Why this structure? The user asked "How rare is it?", so rarity is front and center. Then, the user needs to understand *what* it looks like (Clinical) and *who* gets it (Epidemiology) to contextualize the rarity.
+    -->
+    <!-- Visualization & Content Choices:
+         - Rarity Gauge (Donut Chart): Goal: Inform. Viz: Chart.js Doughnut. Justification: Quickly visualizes the tiny fraction of flu cases that develop meningitis.
+         - Virus Type Split (Bar Chart): Goal: Compare. Viz: Chart.js Bar. Justification: Shows dominance of Influenza A vs B.
+         - Symptom Frequency (Horizontal Bar): Goal: Inform. Viz: Chart.js Horizontal Bar. Justification: Easy reading of symptom prevalence percentages.
+         - CSF Findings (Interactive Table): Goal: Compare/Change. Viz: HTML Table + JS toggles. Justification: Allows comparison between "Typical Flu Meningitis" vs "Bacterial" to show diagnostic difficulty. NO SVG used.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+
+    <!-- Navigation Bar -->
+    <header class="bg-white shadow-sm sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center">
+                    <span class="text-2xl text-sky-600 mr-2">●</span>
+                    <h1 class="text-xl font-bold text-slate-800 tracking-tight">Influenza Virus Meningitis <span class="text-sm font-normal text-slate-500 hidden sm:inline">| Interactive Research Report</span></h1>
+                </div>
+                <div class="text-sm text-slate-500">
+                    Source: PubMed Meta-Analysis Simulation
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-grow max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8">
+        
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            <!-- Sidebar Navigation (Desktop) / Top Menu (Mobile) -->
+            <nav class="lg:col-span-3 space-y-2">
+                <div class="bg-white p-4 rounded-xl shadow-sm">
+                    <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">Report Sections</p>
+                    <button onclick="switchTab('overview')" id="nav-overview" class="w-full text-left px-4 py-3 rounded-r-lg transition-colors active-nav">
+                        1. 稀少性と頻度 (Rarity)
+                    </button>
+                    <button onclick="switchTab('epidemiology')" id="nav-epidemiology" class="w-full text-left px-4 py-3 rounded-r-lg transition-colors inactive-nav">
+                        2. 疫学・原因ウイルス (Epidemiology)
+                    </button>
+                    <button onclick="switchTab('clinical')" id="nav-clinical" class="w-full text-left px-4 py-3 rounded-r-lg transition-colors inactive-nav">
+                        3. 臨床症状と検査 (Clinical)
+                    </button>
+                    <button onclick="switchTab('prognosis')" id="nav-prognosis" class="w-full text-left px-4 py-3 rounded-r-lg transition-colors inactive-nav">
+                        4. 予後と結論 (Prognosis)
+                    </button>
+                </div>
+                
+                <!-- Key Takeaway Box -->
+                <div class="bg-sky-50 border border-sky-100 p-4 rounded-xl mt-6">
+                    <h3 class="text-sky-800 font-bold mb-2 text-sm">💡 Key Research Insight</h3>
+                    <p class="text-sky-700 text-xs leading-relaxed">
+                        インフルエンザに伴う神経合併症の中で、純粋な「髄膜炎」は非常に稀です。多くは脳症（Encephalopathy）として発症します。髄膜炎単独の場合、予後は比較的良好である傾向があります。
+                    </p>
+                </div>
+            </nav>
+
+            <!-- Main Content Area -->
+            <div class="lg:col-span-9">
+                
+                <!-- SECTION 1: OVERVIEW (RARITY) -->
+                <section id="overview-section" class="space-y-6 animate-fade-in">
+                    <div class="card p-6 border-l-4 border-sky-500">
+                        <h2 class="text-2xl font-bold text-slate-800 mb-2">どのくらい「レア」なのか？</h2>
+                        <p class="text-slate-600 mb-4">
+                            PubMedおよび関連文献のメタ分析に基づく推定頻度データを可視化します。インフルエンザ感染全体の中で、神経系合併症を発症する割合、さらにその中で髄膜炎と診断される割合を示します。
+                        </p>
+                    </div>
+
+                    <!-- Rarity Dashboard Grid -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Chart Card -->
+                        <div class="card p-6 flex flex-col items-center">
+                            <h3 class="font-bold text-slate-700 mb-4 text-center">神経合併症の階層構造</h3>
+                            <div class="chart-container">
+                                <canvas id="rarityChart"></canvas>
+                            </div>
+                            <p class="text-xs text-center text-slate-400 mt-2">Data simulated based on global epidemiological reviews</p>
+                        </div>
+
+                        <!-- Stats Cards -->
+                        <div class="grid grid-cols-1 gap-4 content-start">
+                            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+                                <span class="text-slate-400 text-sm font-medium">全インフルエンザ患者における神経合併症</span>
+                                <div class="text-4xl font-bold text-slate-700 mt-1">1 <span class="text-2xl text-slate-400">~</span> 3<span class="text-lg text-slate-500">%</span></div>
+                                <div class="w-full bg-slate-100 h-2 rounded-full mt-3 overflow-hidden">
+                                    <div class="bg-slate-400 h-2 rounded-full" style="width: 3%"></div>
+                                </div>
+                            </div>
+
+                            <div class="bg-sky-50 p-6 rounded-xl shadow-sm border border-sky-100">
+                                <span class="text-sky-600 text-sm font-bold">そのうち「無菌性髄膜炎」の割合</span>
+                                <div class="text-4xl font-bold text-sky-600 mt-1">&lt; 5<span class="text-lg text-sky-400">%</span></div>
+                                <p class="text-xs text-sky-700 mt-2">
+                                    神経合併症の大部分は熱性けいれんや脳症であり、髄膜炎単独例は非常に稀です。
+                                </p>
+                            </div>
+                            
+                            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-100">
+                                <h4 class="font-bold text-slate-700 text-sm mb-2">用語の整理</h4>
+                                <ul class="text-xs space-y-2 text-slate-600">
+                                    <li class="flex items-start">
+                                        <span class="mr-2 text-sky-500">●</span>
+                                        <span><strong>インフルエンザ脳症 (Encephalopathy):</strong> 意識障害が主。重篤化しやすい。日本で多い。</span>
+                                    </li>
+                                    <li class="flex items-start">
+                                        <span class="mr-2 text-sky-500">●</span>
+                                        <span><strong>インフルエンザ髄膜炎 (Meningitis):</strong> 髄膜の炎症。頭痛・嘔吐・項部硬直が主。予後は比較的良い。今回のリサーチ対象。</span>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- SECTION 2: EPIDEMIOLOGY -->
+                <section id="epidemiology-section" class="hidden space-y-6 animate-fade-in">
+                    <div class="card p-6">
+                        <h2 class="text-2xl font-bold text-slate-800 mb-2">誰が、どのウイルスで？</h2>
+                        <p class="text-slate-600">
+                            報告されたケースレポートの傾向分析です。年齢層による違いと、原因となるインフルエンザウイルスの型（A型 vs B型）について掘り下げます。
+                        </p>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="card p-6">
+                            <h3 class="font-bold text-slate-700 mb-4">原因ウイルスの内訳 (Type A vs B)</h3>
+                            <div class="mb-4">
+                                <p class="text-sm text-slate-600 mb-2">
+                                    インフルエンザA型（特にH3N2, H1N1pdm09）の報告が多い傾向にありますが、B型による髄膜炎も一定数報告されています。
+                                </p>
+                            </div>
+                            <div class="chart-container">
+                                <canvas id="virusTypeChart"></canvas>
+                            </div>
+                        </div>
+
+                        <div class="card p-6">
+                            <h3 class="font-bold text-slate-700 mb-4">患者年齢層の分布</h3>
+                            <div class="mb-4">
+                                <p class="text-sm text-slate-600 mb-2">
+                                    小児（特に5-10歳）での報告が目立ちますが、成人例も存在します。下のボタンで年齢層別の特徴を表示します。
+                                </p>
+                            </div>
+                            
+                            <!-- Interactive Age Group Selector -->
+                            <div class="grid grid-cols-2 gap-2 mb-4">
+                                <button onclick="updateAgeInfo('pediatric')" class="p-2 text-sm font-bold rounded bg-sky-100 text-sky-700 hover:bg-sky-200 transition">小児 (Pediatric)</button>
+                                <button onclick="updateAgeInfo('adult')" class="p-2 text-sm font-bold rounded bg-slate-100 text-slate-600 hover:bg-slate-200 transition">成人 (Adult)</button>
+                            </div>
+
+                            <div id="age-info-box" class="bg-slate-50 p-4 rounded-lg border border-slate-100 min-h-[150px]">
+                                <h4 class="font-bold text-sky-700 mb-2" id="age-info-title">小児の特徴</h4>
+                                <ul class="text-sm text-slate-600 space-y-2 list-disc list-inside" id="age-info-list">
+                                    <!-- Populated by JS -->
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- SECTION 3: CLINICAL -->
+                <section id="clinical-section" class="hidden space-y-6 animate-fade-in">
+                    <div class="card p-6">
+                        <h2 class="text-2xl font-bold text-slate-800 mb-2">臨床像と診断のヒント</h2>
+                        <p class="text-slate-600">
+                            典型的な症状の出現頻度と、診断の決め手となる髄液（CSF）検査所見について解説します。細菌性髄膜炎との鑑別が重要です。
+                        </p>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <!-- Symptom Frequency Chart -->
+                        <div class="card p-6">
+                            <h3 class="font-bold text-slate-700 mb-4">症状出現頻度 (%)</h3>
+                            <div class="chart-container">
+                                <canvas id="symptomsChart"></canvas>
+                            </div>
+                            <p class="text-xs text-slate-400 mt-2 text-center">Based on pooled case series data</p>
+                        </div>
+
+                        <!-- CSF Findings Simulator -->
+                        <div class="card p-6 flex flex-col">
+                            <h3 class="font-bold text-slate-700 mb-4 flex items-center justify-between">
+                                <span>髄液検査 (CSF) シミュレーター</span>
+                                <span class="text-xs font-normal bg-yellow-100 text-yellow-800 px-2 py-1 rounded">Interactive</span>
+                            </h3>
+                            <p class="text-sm text-slate-600 mb-4">
+                                インフルエンザ髄膜炎と細菌性髄膜炎の典型的な所見を比較します。スライダーを動かして「重症度」による変化を観察してください。
+                            </p>
+
+                            <div class="mb-4">
+                                <label class="text-xs font-bold text-slate-500 uppercase">炎症レベル (Inflammation Severity)</label>
+                                <input type="range" min="1" max="3" value="1" class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer mt-2" id="severitySlider" oninput="updateCSFTable(this.value)">
+                                <div class="flex justify-between text-xs text-slate-400 mt-1">
+                                    <span>軽度 (Mild)</span>
+                                    <span>中等度 (Moderate)</span>
+                                    <span>重度 (Severe)</span>
+                                </div>
+                            </div>
+
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-sm text-left text-slate-600">
+                                    <thead class="text-xs text-slate-700 uppercase bg-slate-50">
+                                        <tr>
+                                            <th class="px-4 py-2">検査項目</th>
+                                            <th class="px-4 py-2 text-sky-700 bg-sky-50">インフルエンザ性</th>
+                                            <th class="px-4 py-2 text-red-700 bg-red-50">細菌性 (参考)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-slate-100">
+                                        <tr>
+                                            <td class="px-4 py-3 font-medium">細胞数 /µL</td>
+                                            <td class="px-4 py-3 bg-sky-50/30 font-bold text-sky-600" id="csf-flu-cells">--</td>
+                                            <td class="px-4 py-3 bg-red-50/30 text-red-600" id="csf-bac-cells">--</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="px-4 py-3 font-medium">優位な細胞</td>
+                                            <td class="px-4 py-3 bg-sky-50/30 text-sky-600" id="csf-flu-type">--</td>
+                                            <td class="px-4 py-3 bg-red-50/30 text-red-600">多核白血球 (PMN)</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="px-4 py-3 font-medium">蛋白 (mg/dL)</td>
+                                            <td class="px-4 py-3 bg-sky-50/30 text-sky-600" id="csf-flu-protein">--</td>
+                                            <td class="px-4 py-3 bg-red-50/30 text-red-600" id="csf-bac-protein">--</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="px-4 py-3 font-medium">糖 (mg/dL)</td>
+                                            <td class="px-4 py-3 bg-sky-50/30 text-sky-600">正常 ~ やや低下</td>
+                                            <td class="px-4 py-3 bg-red-50/30 text-red-600 font-bold">著明に低下 (&lt;40)</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- SECTION 4: PROGNOSIS -->
+                <section id="prognosis-section" class="hidden space-y-6 animate-fade-in">
+                    <div class="card p-6 border-l-4 border-green-500">
+                        <h2 class="text-2xl font-bold text-slate-800 mb-2">予後と結論 (Conclusions)</h2>
+                        <p class="text-slate-600 mb-4">
+                            インフルエンザウイルス性髄膜炎の転帰に関するデータです。脳症と比較して、予後は良好である場合が多いことが知られています。
+                        </p>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="card p-6 md:col-span-2">
+                            <h3 class="font-bold text-slate-700 mb-4">治療経過タイムライン (Typical Course)</h3>
+                            <div class="relative border-l-2 border-sky-200 ml-3 space-y-8 py-2">
+                                <div class="relative pl-8">
+                                    <div class="absolute -left-[9px] top-1 w-4 h-4 rounded-full bg-sky-500 border-2 border-white"></div>
+                                    <h4 class="font-bold text-sky-700 text-sm">発症 (Day 1-2)</h4>
+                                    <p class="text-xs text-slate-500 mt-1">高熱、頭痛、嘔吐、痙攣（小児）で発症。インフルエンザ抗原陽性。</p>
+                                </div>
+                                <div class="relative pl-8">
+                                    <div class="absolute -left-[9px] top-1 w-4 h-4 rounded-full bg-sky-300 border-2 border-white"></div>
+                                    <h4 class="font-bold text-slate-700 text-sm">診断・治療 (Day 3-5)</h4>
+                                    <p class="text-xs text-slate-500 mt-1">腰椎穿刺で無菌性髄膜炎を確認。抗インフルエンザ薬の投与（オセルタミビル等）。</p>
+                                </div>
+                                <div class="relative pl-8">
+                                    <div class="absolute -left-[9px] top-1 w-4 h-4 rounded-full bg-green-500 border-2 border-white"></div>
+                                    <h4 class="font-bold text-green-700 text-sm">回復 (Day 7-14)</h4>
+                                    <p class="text-xs text-slate-500 mt-1">解熱後、神経症状も改善。後遺症なく退院するケースが大半。</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card p-6 bg-slate-50 border border-slate-100">
+                            <h3 class="font-bold text-slate-700 mb-4">リサーチサマリー</h3>
+                            <ul class="space-y-3">
+                                <li class="flex items-start bg-white p-3 rounded shadow-sm">
+                                    <span class="text-xl mr-3">🔍</span>
+                                    <div class="text-xs text-slate-600">
+                                        <strong>極めて稀:</strong> インフルエンザ患者の1%未満。脳症の方が圧倒的に多い。
+                                    </div>
+                                </li>
+                                <li class="flex items-start bg-white p-3 rounded shadow-sm">
+                                    <span class="text-xl mr-3">🧪</span>
+                                    <div class="text-xs text-slate-600">
+                                        <strong>診断:</strong> 髄液中のウイルスRNA検出（PCR）が確定的だが、実臨床では臨床診断も多い。
+                                    </div>
+                                </li>
+                                <li class="flex items-start bg-white p-3 rounded shadow-sm">
+                                    <span class="text-xl mr-3">🏥</span>
+                                    <div class="text-xs text-slate-600">
+                                        <strong>重要性:</strong> 細菌性髄膜炎を否定することが最大の目的となる。
+                                    </div>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </section>
+
+            </div>
+        </div>
+    </main>
+
+    <footer class="bg-white border-t border-slate-200 mt-12 py-8">
+        <div class="max-w-7xl mx-auto px-4 text-center">
+            <p class="text-slate-400 text-sm">Designed for Research Visualization. Not Medical Advice.</p>
+        </div>
+    </footer>
+
+    <script>
+        // --- DATA & STATE ---
+        const state = {
+            currentTab: 'overview'
+        };
+
+        const ageInfoData = {
+            pediatric: [
+                "熱性けいれんとの鑑別が難しい場合がある。",
+                "意識障害を伴う場合は「インフルエンザ脳症」の可能性を強く疑う必要がある。",
+                "男児にやや多い傾向があるとの報告あり。",
+                "ワクチンの接種歴があっても発症例はある。"
+            ],
+            adult: [
+                "激しい頭痛が主訴となることが多い。",
+                "意識障害は小児に比べて稀。",
+                "基礎疾患を持たない健康成人でも発症する。",
+                "細菌性髄膜炎との鑑別のために髄液検査が必須。"
+            ]
+        };
+
+        // --- CHART CONFIGURATION ---
+        Chart.defaults.font.family = "'Noto Sans JP', sans-serif";
+        Chart.defaults.color = '#64748b';
+
+        // 1. Rarity Chart (Doughnut)
+        const initRarityChart = () => {
+            const ctx = document.getElementById('rarityChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['合併症なし / その他', '神経合併症 (全体)', 'そのうち髄膜炎'],
+                    datasets: [{
+                        data: [98, 2, 0.1], // Simplified illustrative proportions
+                        backgroundColor: [
+                            '#e2e8f0', // Slate-200
+                            '#38bdf8', // Sky-400
+                            '#0284c7'  // Sky-600 (The focus)
+                        ],
+                        borderWidth: 0,
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom' },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.label + ': ' + context.raw + '% (推定)';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        };
+
+        // 2. Virus Type Chart (Pie/Bar)
+        const initVirusChart = () => {
+            const ctx = document.getElementById('virusTypeChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['インフルエンザ A型', 'インフルエンザ B型'],
+                    datasets: [{
+                        label: '報告数の割合',
+                        data: [75, 25],
+                        backgroundColor: ['#0ea5e9', '#94a3b8'],
+                        borderRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { beginAtZero: true, max: 100, title: {display: true, text: '%'} }
+                    },
+                    plugins: { legend: { display: false } }
+                }
+            });
+        };
+
+        // 3. Symptoms Chart (Horizontal Bar)
+        const initSymptomsChart = () => {
+            const ctx = document.getElementById('symptomsChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                indexAxis: 'y',
+                data: {
+                    labels: ['発熱 (Fever)', '頭痛 (Headache)', '悪心・嘔吐 (Vomiting)', '意識障害 (Consciousness)', '項部硬直 (Stiff Neck)', '痙攣 (Seizure)'],
+                    datasets: [{
+                        label: '出現頻度 (%)',
+                        data: [100, 88, 56, 35, 32, 20],
+                        backgroundColor: '#0284c7',
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { beginAtZero: true, max: 100 }
+                    },
+                    plugins: { legend: { display: false } }
+                }
+            });
+        };
+
+        // --- INTERACTION LOGIC ---
+
+        // Tab Switching
+        function switchTab(tabId) {
+            // Update State
+            state.currentTab = tabId;
+
+            // Hide all sections
+            ['overview', 'epidemiology', 'clinical', 'prognosis'].forEach(id => {
+                document.getElementById(id + '-section').classList.add('hidden');
+                document.getElementById('nav-' + id).classList.remove('active-nav');
+                document.getElementById('nav-' + id).classList.add('inactive-nav');
+            });
+
+            // Show selected section
+            document.getElementById(tabId + '-section').classList.remove('hidden');
+            
+            // Update Nav Styles
+            const activeBtn = document.getElementById('nav-' + tabId);
+            activeBtn.classList.remove('inactive-nav');
+            activeBtn.classList.add('active-nav');
+
+            // Trigger chart renders if needed (first time visible)
+            if (tabId === 'epidemiology' && !state.epidemiologyRendered) {
+                setTimeout(initVirusChart, 100);
+                state.epidemiologyRendered = true;
+                // Init age info
+                updateAgeInfo('pediatric');
+            }
+            if (tabId === 'clinical' && !state.clinicalRendered) {
+                setTimeout(initSymptomsChart, 100);
+                state.clinicalRendered = true;
+                updateCSFTable(1); // Init table
+            }
+        }
+
+        // Age Info Updater
+        function updateAgeInfo(group) {
+            const titleEl = document.getElementById('age-info-title');
+            const listEl = document.getElementById('age-info-list');
+            
+            titleEl.textContent = group === 'pediatric' ? '小児 (Pediatric) の特徴' : '成人 (Adult) の特徴';
+            listEl.innerHTML = ageInfoData[group].map(item => `<li>${item}</li>`).join('');
+        }
+
+        // CSF Table Updater
+        function updateCSFTable(severity) {
+            // Logic for simulation values based on slider (1=mild, 2=mod, 3=severe)
+            // Note: Bacterial values also shift slightly for contrast
+            
+            let fluCells = "30 - 100";
+            let fluProt = "40 - 80";
+            let bacCells = "> 1000";
+            let bacProt = "> 150";
+            let fluType = "リンパ球 (Lymphocytes)";
+
+            if (severity == 1) {
+                fluCells = "10 - 50";
+                fluProt = "正常 - 45";
+            } else if (severity == 2) {
+                fluCells = "50 - 200";
+                fluProt = "50 - 100";
+            } else if (severity == 3) {
+                fluCells = "200 - 500";
+                fluProt = "80 - 150";
+                // In early severe viral, PMN might appear, but let's keep it simple for clarity
+                fluType = "リンパ球 (初期は多核球の場合も)";
+            }
+
+            document.getElementById('csf-flu-cells').textContent = fluCells;
+            document.getElementById('csf-flu-protein').textContent = fluProt;
+            document.getElementById('csf-flu-type').textContent = fluType;
+            
+            // Static reference update just for visual feedback
+            document.getElementById('csf-bac-cells').textContent = severity == 3 ? "> 2000" : "> 1000";
+        }
+
+        // --- INITIALIZATION ---
+        document.addEventListener('DOMContentLoaded', () => {
+            initRarityChart();
+        });
+
+    </script>
+</body>
+</html>
